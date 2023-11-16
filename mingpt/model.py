@@ -211,6 +211,27 @@ class GPT(nn.Module):
                     sd[k].copy_(sd_hf[k])
 
         return model
+    
+    @classmethod
+    def from_checkpoint(cls, config, checkpoint_path):
+        """
+        Initialize the model from a checkpoint.
+        """
+        model = cls(config)
+        model.load_checkpoint(checkpoint_path)
+        return model
+    
+    def load_checkpoint(self, checkpoint_path):
+        """
+        Load the model from a checkpoint.
+        """
+        self.load_state_dict(torch.load(checkpoint_path))
+    
+    def save_checkpoint(self, checkpoint_path):
+        """
+        Save the model to a checkpoint.
+        """
+        torch.save(self.state_dict(), checkpoint_path)
 
     def configure_optimizers(self, train_config):
         """

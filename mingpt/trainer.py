@@ -5,6 +5,7 @@ so nothing in this file really has anything to do with GPT specifically.
 
 import time
 from collections import defaultdict
+import os
 
 import torch
 from torch.utils.data.dataloader import DataLoader
@@ -26,6 +27,9 @@ class Trainer:
         C.betas = (0.9, 0.95)
         C.weight_decay = 0.1 # only applied on matmul weights
         C.grad_norm_clip = 1.0
+        C.checkpoint_iters = 100 # save a checkpoint every N iterations
+        C.checkpoint_dir = None # directory to save checkpoints in
+        C.load_checkpoint = True # load the latest checkpoint from the checkpoint path
         return C
 
     def __init__(self, config, model, train_dataset):
@@ -74,11 +78,36 @@ class Trainer:
             num_workers=config.num_workers,
         )
 
+        assert config.checkpoint_iters is None or config.checkpoint_dir is not None, \
+            "must specify a checkpoint path to save model checkpoints"
+        
+        assert config.load_checkpoint or config.checkpoint_dir is None, \
+            "must specify a checkpoint path to load model checkpoints from"
+        
+        # load the latest checkpoint from the checkpoint path
+        if config.load_checkpoint:
+            if os.path.exists(os.path.join(config.checkpoint_dir, 'model.pt')):
+                model.load_checkpoint(os.path.join(config.checkpoint_dir, 'model.pt'))
+            
+            if os.path.exists(os.path.join(config.checkpoint_dir, 'optim.pt')):
+                self.optimizer.load_state_dict(torch.load(os.path.join(config.checkpoint_dir, 'optim.pt')))
+            
+            # Load the random state
+            if os.path.exists(os.path.join(config.checkpoint_dir, 'rng.pt')):
+                torch.random.set_rng_state(torch.load(os.path.join(config.checkpoint_dir, 'rng.pt')))
+
         model.train()
         self.iter_num = 0
         self.iter_time = time.time()
         data_iter = iter(train_loader)
         while True:
+
+            if config.checkpoint_iters is not None and self.iter_num % config.checkpoint_iters == 0 and self.iter_num > 0:
+                if not os.path.exists(config.checkpoint_dir):
+                    os.makedirs(config.checkpoint_dir)
+                model.save_checkpoint(os.path.join(config.checkpoint_dir, 'model.pt'))
+                torch.save(self.optimizer.state_dict(), os.path.join(config.checkpoint_dir, 'optim.pt'))
+                torch.save(torch.random.get_rng_state(), os.path.join(config.checkpoint_dir, 'rng.pt'))
 
             # fetch the next batch (x, y) and re-init iterator if needed
             try:
@@ -107,3 +136,10 @@ class Trainer:
             # termination conditions
             if config.max_iters is not None and self.iter_num >= config.max_iters:
                 break
+        
+        # Save the model and optimizer state
+        if config.checkpoint_dir is not None:
+            if not os.path.exists(config.checkpoint_dir):
+                os.makedirs(config.checkpoint_dir)
+            model.save_checkpoint(os.path.join(config.checkpoint_dir, 'model.pt'))
+            torch.save(self.optimizer.state_dict(), os.path.join(config.checkpoint_dir, 'optim.pt'))
