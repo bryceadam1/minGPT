@@ -140,7 +140,8 @@ class GPT(nn.Module):
                 'gpt-micro':    dict(n_layer=4, n_head=4, n_embd=128),
                 'gpt-nano':     dict(n_layer=3, n_head=3, n_embd=48),
             }[config.model_type])
-
+        print(config.block_size)
+        print(config.n_embd)
         self.transformer = nn.ModuleDict(dict(
             wte = nn.Embedding(config.vocab_size, config.n_embd),
             wpe = nn.Embedding(config.block_size, config.n_embd),
@@ -213,11 +214,11 @@ class GPT(nn.Module):
         return model
     
     @classmethod
-    def from_checkpoint(cls, config, checkpoint_path):
+    def from_checkpoint(config, checkpoint_path):
         """
         Initialize the model from a checkpoint.
         """
-        model = cls(config)
+        model = GPT(config)
         model.load_checkpoint(checkpoint_path)
         return model
     

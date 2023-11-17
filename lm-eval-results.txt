@@ -1,0 +1,47 @@
+Selected Tasks: ['openbookqa']
+128
+192
+number of parameters: 12.34M
+Using the latest cached version of the module from /home/bryceada/.cache/huggingface/modules/datasets_modules/datasets/openbookqa/f338ccacfbc86fb8c2de3aa1c06d2ce686933de3bca284dba97d32592c52b33f (last modified on Thu Nov 16 23:12:25 2023) since it couldn't be found locally at openbookqa., or remotely on the Hugging Face Hub.
+Task: openbookqa; number of docs: 500
+Task: openbookqa; document 0; context prompt (starting on next line):
+Atomic 26 is drawn to a device, it could be
+(end of prompt on previous line)
+Requests: [Req_loglikelihood('Atomic 26 is drawn to a device, it could be', ' magnetized')[0]
+, Req_loglikelihood('Atomic 26 is drawn to a device, it could be', ' Na')[0]
+, Req_loglikelihood('Atomic 26 is drawn to a device, it could be', ' compass')[0]
+, Req_loglikelihood('Atomic 26 is drawn to a device, it could be', ' K')[0]
+]
+Running loglikelihood requests
+100%|██████████████████████████████████████| 2000/2000 [00:18<00:00, 107.63it/s]
+{
+  "results": {
+    "openbookqa": {
+      "acc": 0.132,
+      "acc_stderr": 0.015152927850580157,
+      "acc_norm": 0.278,
+      "acc_norm_stderr": 0.020055833888070907
+    }
+  },
+  "versions": {
+    "openbookqa": 0
+  },
+  "config": {
+    "model": "mingpt",
+    "model_args": "checkpoint_dir=../minGPT/checkpoints,block_size=128,model_type=gpt-mini,max_length=128",
+    "num_fewshot": 0,
+    "batch_size": null,
+    "batch_sizes": [],
+    "device": "cuda",
+    "no_cache": false,
+    "limit": null,
+    "bootstrap_iters": 100000,
+    "description_dict": {}
+  }
+}
+mingpt (checkpoint_dir=../minGPT/checkpoints,block_size=128,model_type=gpt-mini,max_length=128), limit: None, provide_description: False, num_fewshot: 0, batch_size: None
+|   Task   |Version| Metric |Value|   |Stderr|
+|----------|------:|--------|----:|---|-----:|
+|openbookqa|      0|acc     |0.132|±  |0.0152|
+|          |       |acc_norm|0.278|±  |0.0201|
+
