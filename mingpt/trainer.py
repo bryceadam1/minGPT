@@ -11,6 +11,9 @@ import torch
 from torch.utils.data.dataloader import DataLoader
 from mingpt.utils import CfgNode as CN
 
+
+# create a collate_fn to pad according to the longest sequence in the batch
+
 class Trainer:
 
     @staticmethod
@@ -61,7 +64,7 @@ class Trainer:
     def trigger_callbacks(self, onevent: str):
         for callback in self.callbacks.get(onevent, []):
             callback(self)
-
+    
     def run(self):
         model, config = self.model, self.config
 
@@ -76,6 +79,7 @@ class Trainer:
             pin_memory=True,
             batch_size=config.batch_size,
             num_workers=config.num_workers,
+            collate_fn=self.train_dataset.pad_collate_fn,
         )
 
         assert config.checkpoint_iters is None or config.checkpoint_dir is not None, \
@@ -103,11 +107,12 @@ class Trainer:
         while True:
 
             if config.checkpoint_iters is not None and self.iter_num % config.checkpoint_iters == 0 and self.iter_num > 0:
-                if not os.path.exists(config.checkpoint_dir):
-                    os.makedirs(config.checkpoint_dir)
-                model.save_checkpoint(os.path.join(config.checkpoint_dir, 'model.pt'))
-                torch.save(self.optimizer.state_dict(), os.path.join(config.checkpoint_dir, 'optim.pt'))
-                torch.save(torch.random.get_rng_state(), os.path.join(config.checkpoint_dir, 'rng.pt'))
+                checkpoint_model_dir = os.path.join(config.checkpoint_dir, f"model_{self.iter_num}")
+                if not os.path.exists(checkpoint_model_dir):
+                    os.makedirs(checkpoint_model_dir)
+                model.save_checkpoint(os.path.join(checkpoint_model_dir, 'model.pt'))
+                torch.save(self.optimizer.state_dict(), os.path.join(checkpoint_model_dir, 'optim.pt'))
+                torch.save(torch.random.get_rng_state(), os.path.join(checkpoint_model_dir, 'rng.pt'))
 
             # fetch the next batch (x, y) and re-init iterator if needed
             try:
@@ -139,7 +144,8 @@ class Trainer:
         
         # Save the model and optimizer state
         if config.checkpoint_dir is not None:
-            if not os.path.exists(config.checkpoint_dir):
-                os.makedirs(config.checkpoint_dir)
-            model.save_checkpoint(os.path.join(config.checkpoint_dir, 'model.pt'))
-            torch.save(self.optimizer.state_dict(), os.path.join(config.checkpoint_dir, 'optim.pt'))
+            checkpoint_model_dir = os.path.join(config.checkpoint_dir, f"model_{self.iter_num}")
+            if not os.path.exists(checkpoint_model_dir):
+                os.makedirs(checkpoint_model_dir)
+            model.save_checkpoint(os.path.join(checkpoint_model_dir, 'model.pt'))
+            torch.save(self.optimizer.state_dict(), os.path.join(checkpoint_model_dir, 'optim.pt'))
